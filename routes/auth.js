@@ -63,6 +63,7 @@ router.post(
         body("password", "Enter a valid password").exists(),
     ],
     async (req, res) => {
+        let success = false;
         const error = validationResult(req);
         if (!error.isEmpty()) {
             res.status(500).json({ error: error.array() });
@@ -71,12 +72,14 @@ router.post(
         try {
             const user = await User.findOne({ email });
             if (!user) {
+                success = false
                 return res
                     .status(500)
                     .json({ error: "Please login with Right crendtial" });
             }
             const passwordComare = await bcrypt.compare(password, user.password);
             if (!passwordComare) {
+                success = false
                 return res
                     .status(500)
                     .json({ error: "Please login with Right crendtial" });
@@ -85,10 +88,11 @@ router.post(
                 user: { id: user.id }
             }
             const authToken = jwt.sign(data, Jwt_token)
-            res.send({ authToken })
+            success = true;
+            res.send({ success, authToken })
         } catch (error) {
             console.error(error.message);
-            res.status(500).send("Enternal server error");
+            res.status(500).send("Internal server error");
         }
     }
 );
